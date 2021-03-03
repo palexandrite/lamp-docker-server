@@ -1,0 +1,54 @@
+# Версия docker-compose
+version: "3.8"
+
+# Список наших сервисов (контейнеров)
+services:
+    server:
+      # используем последний стабильный образ nginx
+        # image: nginx:latest
+        build: .
+        container_name: "httpd"
+        # маршрутизируем порты
+        ports:
+            - "80:80"
+        # монтируем директории, слева директории на основной машине, справа - куда они монтируются в контейнере
+        volumes:
+            - ./config/php:/usr/local/etc/php/conf.d
+            - ./hosts:/etc/apache2/sites-enabled
+            - ./logs:/var/log/apache2
+            - ./domains/php.test:/var/www/php.test
+
+            - ./domains/symfony.test/bin:/var/www/symfony.test/bin
+            - ./domains/symfony.test/config:/var/www/symfony.test/config
+            - ./domains/symfony.test/migrations:/var/www/symfony.test/migrations
+            - ./domains/symfony.test/public:/var/www/symfony.test/public
+            - ./domains/symfony.test/src:/var/www/symfony.test/src
+            - ./domains/symfony.test/templates:/var/www/symfony.test/templates
+            - ./domains/symfony.test/var:/var/www/symfony.test/var
+        # nginx должен общаться с mysql контейнером
+        depends_on:
+            - mysql
+    pma:
+        image: phpmyadmin/phpmyadmin
+        container_name: "phpmyadmin"
+        ports:
+            - 8183:80
+        environment:
+            PMA_HOST: mysql
+            MYSQL_USERNAME: root
+            MYSQL_ROOT_PASSWORD: secret
+        restart: always
+        depends_on:
+            - mysql
+    mysql:
+        image: mysql
+        container_name: "mysql"
+        command: --default-authentication-plugin=mysql_native_password
+        ports:
+            - "3306:3306"
+        volumes:
+            - ./mysql:/var/lib/mysql
+        # задаем пароль для root пользователя
+        environment:
+            MYSQL_ROOT_PASSWORD: secret
+        restart: always
