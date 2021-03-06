@@ -10,13 +10,18 @@ services:
         container_name: "httpd"
         # маршрутизируем порты
         ports:
-            - "80:80"
+            - 80:80
         # монтируем директории, слева директории на основной машине, справа - куда они монтируются в контейнере
         volumes:
-            - ./config/php:/usr/local/etc/php/conf.d
+            - ./config/php:/usr/local/etc/php
             - ./hosts:/etc/apache2/sites-enabled
             - ./logs:/var/log/apache2
+
+            # Domains
+            # - ./domains:/var/www
             - ./domains/php.test:/var/www/php.test
+            - ./domains/yii.test:/var/www/yii.test
+            - ./domains/laravel.test:/var/www/laravel.test
 
             - ./domains/symfony.test/bin:/var/www/symfony.test/bin
             - ./domains/symfony.test/config:/var/www/symfony.test/config
@@ -25,15 +30,18 @@ services:
             - ./domains/symfony.test/src:/var/www/symfony.test/src
             - ./domains/symfony.test/templates:/var/www/symfony.test/templates
             - ./domains/symfony.test/var:/var/www/symfony.test/var
-        # nginx должен общаться с mysql контейнером
+            - ./domains/symfony.test/vendor:/var/www/symfony.test/vendor
+
+        # php и apache должны общаться с mysql контейнером
         depends_on:
             - mysql
     pma:
-        image: phpmyadmin/phpmyadmin
+        image: phpmyadmin
         container_name: "phpmyadmin"
         ports:
-            - 8183:80
+            - 8080:80
         environment:
+            PMA_ARBITRARY: 1
             PMA_HOST: mysql
             MYSQL_USERNAME: root
             MYSQL_ROOT_PASSWORD: secret
@@ -45,7 +53,7 @@ services:
         container_name: "mysql"
         command: --default-authentication-plugin=mysql_native_password
         ports:
-            - "3306:3306"
+            - 3306:3306
         volumes:
             - ./mysql:/var/lib/mysql
         # задаем пароль для root пользователя
